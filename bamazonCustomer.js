@@ -102,17 +102,17 @@ var requestProduct = function() {
 
 //Completes user's request to purchase product 
  var completePurchase = function(stock_quantity, price, productSales, productDepartment, selectedProductID, selectedProductUnits){
-//console.log(price);
+
 		//Updates stock quantity once purchase complete 
 	  	var updatedStockQuantity = stock_quantity - selectedProductUnits;
-	  	//console.log(updatedStockQuantity)
+	  	
 	  	//Calcualates total price for purchase based on unit price, and number of units 
 	  	var totalPrice = price * selectedProductUnits;
-	  	//console.log(totalPrice);
+	  	
 	 	//Updates total sales
 	 	var updatedProductSales = parseInt(productSales) + parseInt(totalPrice); // parses a string argument and returns an integer
-	 	//console.log(updatedProductSales);
-	 	//discuss with Zack - why parseINT is giving a NaN 
+	 	
+	 	
 	 	//Updates stock quantity on the database based on user's purchase 
 	 	var query = "UPDATE products SET ? WHERE ?";
 	 	connection.query(query, [{
@@ -131,45 +131,46 @@ var requestProduct = function() {
  		console.log("Your payment has been received in the amount of : " + totalPrice + "(\n) Please shop MY BAMAZON again soon!");
 
 		//Updates depapartment revenue based on purchase 
-		updateDepartmentRevenue(updatedProductSales, productDepartment);
+		 updateDepartmentRevenue(updatedProductSales, productDepartment);
 	
 	
 	});//end of function(err/res)
 };//end of function completePurchase
 
 //Updates total sales for department after completed purchase
- var updateDepartmentRevenue = function(updatedProductSales, productDepartment) {
+  var updateDepartmentRevenue = function(updatedProductSales, productDepartment) {
 
-// 	//query database for total sales value for department
-	var query = "Select total_sales FROM products WHERE ?";
-	connection.query(query, {department_name: productDepartment}, function(err, res) {
-	if(err) throw err;
-	console.log(res);
+//query database for total sales value for department
+ 	var query = "Select total_sales FROM departments WHERE ?";
+ 	connection.query(query, {department_name: productDepartment}, function(err, res) {
+ 	if(err) throw err;
+ 
+ 
 
-		var departmentSales = res[0].total_sales;
-		console.log(res[0].total_sales);
+ 		var departmentSales = res[0].total_sales; 
+ 		
 
-		var updatedDepartmentSales = parseInt(depatmentSales) + parseInt(updatedProductSales);
+ 		var updatedDepartmentSales = parseInt(departmentSales) + parseInt(updatedProductSales);
 
- 		//Completes update to total sales for department
- 		completeDepartmentSalesUpdate(updatedDepatmentSales, productDepartment);
- 	});// end of query
+  		//Completes update to total sales for department
+  		completeDepartmentSalesUpdate(updatedDepatmentSales, productDepartment);
+  	});// end of query
  };//end of updatedepartmentRevenue 
 
- 	//Completes update to total sales for department on database.
- var completeDepartmentSalesUpdate = function(updatedDepartmentSales, productDepartment) {
+  	//Completes update to total sales for department on database.
+  var completeDepartmentSalesUpdate = function(updatedDepartmentSales, productDepartment) {
 
- 	var query = " UPDATE departments SET ? WHERE ?";
- 	connection.query(query, [{
- 		total_sales: updatedDepartmentSales
- 	}, { 
- 		department_name: productDepartment
+  	var query = " UPDATE departments SET ? WHERE ?";
+  	connection.query(query, [{
+  		total_sales: updatedDepartmentSales
+  	}, { 
+  		department_name: productDepartment
 
- 	}], function(err, res) {
+  	}], function(err, res) {
 
- 		if(err) throw err;
+  		if(err) throw err;
 
-		//Displays products so user can choose to make another purchase
-		displayProducts();
- 	});
- };
+ 		//Displays products so user can choose to make another purchase
+ 		displayProducts();
+  	});
+  };
