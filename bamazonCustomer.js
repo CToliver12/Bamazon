@@ -3,8 +3,6 @@
 //Required node modules and dependencies 
 var mysql = require("mysql"); 
 var inquirer = require("inquirer"); 
-var Table = require("easy-table");
-var Table = require("cli-table");
 
 //Connects to the database
 var connection = mysql.createConnection({
@@ -19,6 +17,7 @@ connection.connect(function(err){
 	if (err) throw err;
 	console.log("connected as id " + connection.threadId);
 
+	//Displays list of available products 
 	displayProducts();
 
 });
@@ -69,18 +68,18 @@ var requestProduct = function() {
 		 }]).then(function(answer) {
 
 		//Queries database for selected product.
-		var query = "Select stock_quantity, price, product_name, department_name FROM products WHERE ?";
-		connection.query(query, { item_id: answer.productID}, function(err,results){
+		var query = "Select stock_quantity, price, products_sales, department_name FROM products WHERE ?";
+		connection.query(query, { item_id: answer.productID}, function(err,res){
 		
-				
+		if (err) throw err;			
 
 				
- 				var available_stock = results[0].stock_quantity;//# in stock 
- 				var price_per_unit = results[0].price;// price of that unit 
-				var productSales = results[0].product_name; // name of item 
-				var productDepartment = results[0].department_name;//department where item is located 
+ 				var available_stock = res[0].stock_quantity;//# in stock
+ 				var price_per_unit = res[0].price;// price of that unit 
+ 				var productSales = res[0].products_sales; // name of item 
+				var productDepartment = res[0].department_name;//department where item is located 
 				
-
+					
  				//Checks if there is enough inventory to process user's reuqest
 				if(available_stock >= answer.productUnits){ // greater than or equal too 
 					
@@ -111,14 +110,14 @@ var requestProduct = function() {
 	  	var totalPrice = price * selectedProductUnits;
 	  	//console.log(totalPrice);
 	 	//Updates total sales
-	 	var updatedProductSales = (productSales) + (totalPrice); // parses a string argument and returns an integer
+	 	var updatedProductSales = parseInt(productSales) + parseInt(totalPrice); // parses a string argument and returns an integer
 	 	//console.log(updatedProductSales);
 	 	//discuss with Zack - why parseINT is giving a NaN 
 	 	//Updates stock quantity on the database based on user's purchase 
 	 	var query = "UPDATE products SET ? WHERE ?";
 	 	connection.query(query, [{
 	  		stock_quantity: updatedStockQuantity,
-	 		product_name: updatedProductSales
+	 		products_sales: updatedProductSales
   		}, {
 	 		item_id: selectedProductID
 	 	}], function(err,res) {
@@ -132,44 +131,45 @@ var requestProduct = function() {
  		console.log("Your payment has been received in the amount of : " + totalPrice + "(\n) Please shop MY BAMAZON again soon!");
 
 		//Updates depapartment revenue based on purchase 
-		//updateDepartmentRevenue(updatedProductSales, productDepartment);
-		displayProducts();
+		updateDepartmentRevenue(updatedProductSales, productDepartment);
+	
 	
 	});//end of function(err/res)
 };//end of function completePurchase
 
 //Updates total sales for department after completed purchase
-// var updateDepartmentRevenue = function(updatedProductSales, productDepartment) {
+ var updateDepartmentRevenue = function(updatedProductSales, productDepartment) {
 
 // 	//query database for total sales value for department
-// 	var query = "Select total_sales FROM products WHERE ?";
-// 	connection.query(query, {department_name: productDepartment}, function(err, res) {
-// console.log(res);
-// 		if(err) throw err;
+	var query = "Select total_sales FROM products WHERE ?";
+	connection.query(query, {department_name: productDepartment}, function(err, res) {
+	if(err) throw err;
+	console.log(res);
 
-// 		var departmentSales = res[0].total_sales;
+		var departmentSales = res[0].total_sales;
+		console.log(res[0].total_sales);
 
-// 		var updatedDepartmentSales = parseInt(depatmentSales) + parseInt(updatedProductSales);
+		var updatedDepartmentSales = parseInt(depatmentSales) + parseInt(updatedProductSales);
 
-// 		//Completes update to total sales for department
-// 		completeDepartmentSalesUpdate(updatedDepatmentSales, productDepartment);
-// 	});// end of query
-// };//end of updatedepartmentRevenue 
+ 		//Completes update to total sales for department
+ 		completeDepartmentSalesUpdate(updatedDepatmentSales, productDepartment);
+ 	});// end of query
+ };//end of updatedepartmentRevenue 
 
-// //Completes update to total sales for department on database.
-// var completeDepartmentSalesUpdate = function(updatedDepartmentSales, productDepartment) {
+ 	//Completes update to total sales for department on database.
+ var completeDepartmentSalesUpdate = function(updatedDepartmentSales, productDepartment) {
 
-// 	var query = " UPDATE departments SET ? WHERE ?";
-// 	connection.query(query, [{
-// 		total_sales: updatedDepartmentSales
-// 	}, { 
-// 		department_name: productDepartment
+ 	var query = " UPDATE departments SET ? WHERE ?";
+ 	connection.query(query, [{
+ 		total_sales: updatedDepartmentSales
+ 	}, { 
+ 		department_name: productDepartment
 
-// 	}], function(err, res) {
+ 	}], function(err, res) {
 
-// 		if(err) throw err;
+ 		if(err) throw err;
 
 		//Displays products so user can choose to make another purchase
-		//displayProducts();
-// 	});
-// };
+		displayProducts();
+ 	});
+ };
